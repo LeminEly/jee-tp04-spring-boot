@@ -7,6 +7,9 @@
 # .java, .xml, .properties, .yml, .py, .md (registre G.54).
 
 default_install_hook_types: [pre-commit, commit-msg]
+# Sans étape déclarée, un contrôle s'exécute à TOUTES les étapes installées :
+# les contrôles de fichiers étaient relancés au moment du message de commit.
+default_stages: [pre-commit]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
