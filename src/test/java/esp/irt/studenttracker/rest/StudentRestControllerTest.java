@@ -57,4 +57,26 @@ class StudentRestControllerTest {
                                         """,
                                         JsonCompareMode.STRICT));
     }
+
+    @Test
+    void studentParIndexRenvoieLePremierEtudiant() throws Exception {
+        mockMvc.perform(get("/api/students/0"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .json(
+                                        "{\"firstName\":\"Poornima\",\"lastName\":\"Patel\"}",
+                                        JsonCompareMode.STRICT));
+    }
+
+    @Test
+    void studentParIndexRenvoieLeDernierEtudiant() throws Exception {
+        mockMvc.perform(get("/api/students/2"))
+                .andExpect(status().isOk())
+                .andExpect(
+                        content()
+                                .json(
+                                        "{\"firstName\":\"Mary\",\"lastName\":\"Smith\"}",
+                                        JsonCompareMode.STRICT));
+    }
 }
