@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,5 +32,13 @@ public class StudentRestController {
     @GetMapping("/students")
     public List<Student> getStudents() {
         return theStudents;
+    }
+
+    // Le nom du paramètre Java correspond au placeholder {studentId} de l'URL.
+    // Pas encore de contrôle des bornes : un index invalide produit un 500
+    // (exercice 5.4), corrigé aux exercices 5.5 et 5.6.
+    @GetMapping("/students/{studentId}")
+    public Student getStudent(@PathVariable int studentId) {
+        return theStudents.get(studentId);
     }
 }
