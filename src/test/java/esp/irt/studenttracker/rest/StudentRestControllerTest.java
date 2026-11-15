@@ -1,11 +1,14 @@
 package esp.irt.studenttracker.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -67,6 +70,16 @@ class StudentRestControllerTest {
                                 .json(
                                         "{\"firstName\":\"Poornima\",\"lastName\":\"Patel\"}",
                                         JsonCompareMode.STRICT));
+    }
+
+    // Exercice 5.5 : aucun handler encore, l'exception métier sort du contrôleur.
+    // 3 est la première valeur hors bornes (taille 3), -1 la borne inférieure.
+    @ParameterizedTest
+    @ValueSource(ints = {999, 3, -1})
+    void indexHorsBornesLeveStudentNotFoundException(int studentId) {
+        assertThatThrownBy(() -> mockMvc.perform(get("/api/students/" + studentId)))
+                .hasRootCauseInstanceOf(StudentNotFoundException.class)
+                .hasRootCauseMessage("Student id not found - " + studentId);
     }
 
     @Test
