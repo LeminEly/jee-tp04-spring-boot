@@ -1,5 +1,6 @@
 package esp.irt.studenttracker.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -15,6 +16,16 @@ import org.springframework.test.web.servlet.MockMvc;
 class StudentRestControllerTest {
 
     @Autowired private MockMvc mockMvc;
+
+    @Autowired private StudentRestController controller;
+
+    @Test
+    void laListeEstConstruiteUneSeuleFoisParLeConteneur() {
+        // @PostConstruct a été exécutée par Spring : la liste existe déjà.
+        assertThat(controller.getStudents()).hasSize(3);
+        // Et elle n'est pas recréée d'un appel à l'autre.
+        assertThat(controller.getStudents()).isSameAs(controller.getStudents());
+    }
 
     @Test
     void helloRenvoieHelloWorldEnTexte() throws Exception {
