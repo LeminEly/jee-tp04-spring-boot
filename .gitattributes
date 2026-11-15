@@ -1,0 +1,14 @@
+# Normalise les fins de ligne : un poste Windows ne doit pas produire un diff
+# entier sur un fichier qu'il n'a pas modifié.
+
+* text=auto eol=lf
+
+/mvnw  text eol=lf
+*.sh   text eol=lf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+*.jar  binary

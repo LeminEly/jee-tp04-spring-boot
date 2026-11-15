@@ -1,0 +1,54 @@
+# Principe : ce qui n'est pas le produit ne part jamais. En cas de doute, exclure.
+
+# Secrets et environnement
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+keys/
+secrets/
+
+# Construction Maven
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/wrapper/maven-wrapper.jar
+
+# Généré par start.spring.io, sans valeur pour le produit
+HELP.md
+
+# Journaux
+*.log
+
+# Outillage de poste — IntelliJ, VS Code, Eclipse/STS, NetBeans
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Fichiers de travail : ils vivent hors du dépôt, dans ../travail/
+scratch/
+tmp/
+*.tmp

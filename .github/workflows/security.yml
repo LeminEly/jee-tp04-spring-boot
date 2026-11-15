@@ -1,0 +1,44 @@
+# Le déclencheur planifié n'est pas décoratif : une vulnérabilité publiée après
+# la dernière fusion ne se voit que comme cela.
+#
+# Pas de job d'image ni d'en-têtes publics : rien n'est déployé (CLAUDE.md §1).
+
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  # Dépendances introduites par une demande : bloquant à partir de « high ».
+  # Action GitHub de première partie ; demande le graphe de dépendances actif.
+  dependencies:
+    name: Dépendances
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  # Analyse statique du code Java.
+  static-analysis:
+    name: Analyse statique (CodeQL)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+          build-mode: none
+      - uses: github/codeql-action/analyze@v3

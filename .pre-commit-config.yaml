@@ -1,0 +1,57 @@
+# Installer : pre-commit install --hook-type pre-commit --hook-type commit-msg
+#
+# Les mêmes contrôles sont rejoués en intégration : contourner localement ne
+# gagne rien. Jamais de --no-verify.
+#
+# Portée : un seul projet, à la racine du dépôt. Extensions présentes :
+# .java, .xml, .properties, .yml, .py, .md (registre G.54).
+
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        exclude: \.cmd$
+      - id: check-yaml
+      - id: check-xml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: detect-private-key
+      - id: check-executables-have-shebangs
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: identite-auteur
+        name: Identité de l'auteur et du validateur
+        entry: python3 scripts/check-identity.py
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: format-java
+        name: Formatage Java (Spotless, google-java-format AOSP)
+        entry: ./mvnw -B -q spotless:check
+        language: system
+        files: (\.java|^pom\.xml)$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: message-de-commit
+        name: Message de commit (Conventional Commits, aucun outil, aucun emoji)
+        entry: python3 scripts/check-commit-msg.py
+        language: system
+        stages: [commit-msg]

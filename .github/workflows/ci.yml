@@ -1,0 +1,79 @@
+# Les clés de jobs restent en ASCII [A-Za-z_][A-Za-z0-9_-]* : un accent rend le
+# fichier illisible par la plateforme, et l'échec est silencieux (registre G.1).
+#
+# Chaque porte activée ici a été VÉRIFIÉE contre un cas fautif avant d'être
+# déclarée en place : un garde-fou qu'on n'a jamais vu échouer est une décoration.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Formatage (Spotless), compilation, tests unitaires et d'intégration MockMvc.
+  # Tout passe par « verify » : la même commande qu'en local.
+  quality:
+    name: Format, compilation et tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          cache: maven
+      - run: ./mvnw -B verify
+
+  # Secrets : tout l'historique, pas seulement le dernier commit.
+  secrets:
+    name: Recherche de secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # La trace : message, auteur et validateur de chaque commit de la demande
+  # (registre G.52). Les fusions, reconnues à leurs parents, ne sont lues que
+  # sur le fond (G.58).
+  trace:
+    name: Messages et identités des commits
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Contrôler chaque commit de la demande
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          echec=0
+          for sha in $(git rev-list "$BASE..$HEAD"); do
+            git log -1 --format=%B "$sha" > "$RUNNER_TEMP/msg"
+            parents=$(git rev-list --parents -n 1 "$sha" | wc -w)
+            option=""
+            if [ "$parents" -gt 2 ]; then option="--fond-seulement"; fi
+            if ! python3 scripts/check-commit-msg.py $option "$RUNNER_TEMP/msg"; then
+              echo "::error::commit $sha : message refusé"; echec=1
+            fi
+            ident=$(git log -1 --format='%an <%ae> | %cn <%ce>' "$sha")
+            if echo "$ident" | grep -Eiq 'claude|anthropic|chatgpt|openai|copilot|gemini|cursor|codeium|tabnine|\[bot\]'; then
+              echo "::error::commit $sha : identité d'outil — $ident"; echec=1
+            fi
+          done
+          exit $echec
