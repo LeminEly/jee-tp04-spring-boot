@@ -1,11 +1,13 @@
 package esp.irt.studenttracker.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -72,14 +74,37 @@ class StudentRestControllerTest {
                                         JsonCompareMode.STRICT));
     }
 
-    // Exercice 5.5 : aucun handler encore, l'exception métier sort du contrôleur.
     // 3 est la première valeur hors bornes (taille 3), -1 la borne inférieure.
     @ParameterizedTest
     @ValueSource(ints = {999, 3, -1})
-    void indexHorsBornesLeveStudentNotFoundException(int studentId) {
-        assertThatThrownBy(() -> mockMvc.perform(get("/api/students/" + studentId)))
-                .hasRootCauseInstanceOf(StudentNotFoundException.class)
-                .hasRootCauseMessage("Student id not found - " + studentId);
+    void indexHorsBornesRenvoie404Structure(int studentId) throws Exception {
+        long avant = System.currentTimeMillis();
+        mockMvc.perform(get("/api/students/" + studentId))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Student id not found - " + studentId))
+                .andExpect(jsonPath("$.timeStamp").value(entre(avant)))
+                .andExpect(jsonPath("$.trace").doesNotExist());
+    }
+
+    // Catch-all : un id non numérique échoue à la conversion en int.
+    @Test
+    void idNonNumeriqueRenvoie400Structure() throws Exception {
+        long avant = System.currentTimeMillis();
+        mockMvc.perform(get("/api/students/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andExpect(jsonPath("$.timeStamp").value(entre(avant)))
+                .andExpect(jsonPath("$.trace").doesNotExist());
+    }
+
+    /** L'horodatage est celui de la requête : entre le début du test et maintenant. */
+    private static Matcher<Long> entre(long avant) {
+        return Matchers.both(Matchers.greaterThanOrEqualTo(avant))
+                .and(Matchers.lessThanOrEqualTo(System.currentTimeMillis() + 1000));
     }
 
     @Test
