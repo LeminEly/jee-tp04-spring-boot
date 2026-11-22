@@ -35,10 +35,13 @@ public class StudentRestController {
     }
 
     // Le nom du paramètre Java correspond au placeholder {studentId} de l'URL.
-    // Pas encore de contrôle des bornes : un index invalide produit un 500
-    // (exercice 5.4), corrigé aux exercices 5.5 et 5.6.
+    // Un index invalide lève l'exception métier ; aucun handler ne l'attrape encore,
+    // la réponse reste un 500 (exercice 5.5) jusqu'à l'exercice 5.6.
     @GetMapping("/students/{studentId}")
     public Student getStudent(@PathVariable int studentId) {
+        if (studentId >= theStudents.size() || studentId < 0) {
+            throw new StudentNotFoundException("Student id not found - " + studentId);
+        }
         return theStudents.get(studentId);
     }
 }
