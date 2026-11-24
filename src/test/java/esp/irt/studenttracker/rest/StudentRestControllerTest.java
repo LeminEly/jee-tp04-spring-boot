@@ -16,6 +16,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @WebMvcTest(StudentRestController.class)
 class StudentRestControllerTest {
@@ -30,6 +32,15 @@ class StudentRestControllerTest {
         assertThat(controller.getStudents()).hasSize(3);
         // Et elle n'est pas recréée d'un appel à l'autre.
         assertThat(controller.getStudents()).isSameAs(controller.getStudents());
+    }
+
+    // Exercice 5.7 : la gestion d'erreur vit dans le @ControllerAdvice, plus dans le contrôleur.
+    @Test
+    void leControleurNeContientPlusDeHandlerLocal() {
+        assertThat(StudentRestController.class.getDeclaredMethods())
+                .noneMatch(m -> m.isAnnotationPresent(ExceptionHandler.class));
+        assertThat(StudentRestExceptionHandler.class.isAnnotationPresent(ControllerAdvice.class))
+                .isTrue();
     }
 
     @Test
@@ -86,6 +97,16 @@ class StudentRestControllerTest {
                 .andExpect(jsonPath("$.message").value("Student id not found - " + studentId))
                 .andExpect(jsonPath("$.timeStamp").value(entre(avant)))
                 .andExpect(jsonPath("$.trace").doesNotExist());
+    }
+
+    // Le catch-all global ne doit pas transformer une URL inconnue en 400.
+    @ParameterizedTest
+    @ValueSource(strings = {"/hello", "/api/inconnu"})
+    void urlInconnueRenvoie404Structure(String url) throws Exception {
+        mockMvc.perform(get(url))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
     // Catch-all : un id non numérique échoue à la conversion en int.
